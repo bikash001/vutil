@@ -43,6 +43,24 @@ Quality-first with a size cap and fixed resolution:
 PYTHONPATH=src python3 -m vutil.cli input.mp4 output.mp4 --max-size-mb 25 --resolution 1280x720
 ```
 
+Trim a video without compressing it:
+
+```bash
+PYTHONPATH=src python3 -m vutil.cli input.mp4 output.mp4 --start 00:01:10 --end 00:01:42
+```
+
+Trim a video exactly at the requested timestamps:
+
+```bash
+PYTHONPATH=src python3 -m vutil.cli input.mp4 output.mp4 --start 00:01:10.100 --end 00:01:42.400 --trim-mode exact
+```
+
+Trim a video and replace its audio with aligned external audio:
+
+```bash
+PYTHONPATH=src python3 -m vutil.cli input.mp4 output.mp4 --start 00:01:10 --end 00:01:42 --replace-audio dub.wav
+```
+
 Preview the exact `ffmpeg` command without running it:
 
 ```bash
@@ -66,10 +84,13 @@ Useful flags:
 Notes:
 
 - execution is real by default
+- if you use trim/audio replacement without explicit video-compression options, `vutil` runs in edit-only mode by default
 - with `--max-size-mb`, size is treated as a ceiling, not a fixed target
 - with `--max-size-mb`, auto mode predicts CRF from a few short sample chunks, 2 seconds each by default, before doing one final full encode
 - by default, encoding uses `CPU count - 2` threads, with a minimum of `1`
 - `--threads` lets you override that default for both normal mode and auto mode
+- audio replacement aligns the external audio automatically unless `--audio-offset` is provided
+- `--trim-mode exact` gives more accurate cuts, but it re-encodes the edited streams
 - WebM defaults to `Opus` audio so the container stays valid
 - the CLI will block incompatible combinations like `WebM + AAC`
 
@@ -77,6 +98,12 @@ Notes:
 
 - `input_path`: source video file to read.
 - `output_path`: destination file to write.
+- `--start TIME`: trim start time. Supports seconds or `HH:MM:SS(.mmm)`.
+- `--end TIME`: trim end time. Supports seconds or `HH:MM:SS(.mmm)`.
+- `--replace-audio PATH`: replace the video's audio with an external audio file.
+- `--audio-offset TIME`: manual replacement-audio offset. Skips automatic alignment when provided.
+- `--edit-only`: force trim/audio replacement without video compression.
+- `--trim-mode {smart,copy,exact}`: choose between automatic trim behavior, fast stream-copy trimming, or precise re-encoded trimming.
 - `--container {mp4,mkv,webm,mov}`: output container format. Default: `mp4`.
 - `--codec {h264,h265,vp9,av1,prores,ffv1}`: video codec to use. Default: `h264` in manual mode, auto-selected in max-size mode unless provided.
 - `--audio-codec {aac,opus,mp3,flac,copy}`: audio codec to use. Default: `aac`, or `opus` for `webm`.
